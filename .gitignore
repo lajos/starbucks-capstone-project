@@ -1,0 +1,18 @@
+tmp/
+output.png
+
+# ignore vscode/python temp stuff
+
+tempCodeRunnerFile.py
+__pycache__/
+*.py[cod]
+*$py.class
+~*
+.vscode/
+
+
+# ignore jupyter notebook temp stuff
+
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
