@@ -1,7 +1,7 @@
 from fnmatch import translate
 import pandas as pd
 import numpy as np
-import time
+import datetime, time
 import os.path
 import sys
 from tqdm import tqdm
@@ -32,14 +32,14 @@ class OfferRecord:
 
     def as_dict(self):
         d = {}
-        d['person id'] = self.person_id
-        d['offer id'] = self.offer_id
-        d['offer viewed'] = self.viewed
-        d['offer completed'] = self.completed
-        d['offer start date'] = self.start_date
-        d['offer end date'] = self.end_date
-        d['transaction count'] = self.transaction_count
-        d['transaction total'] = self.transaction_total
+        d['person_id'] = self.person_id
+        d['offer_id'] = self.offer_id
+        d['offer_viewed'] = self.viewed
+        d['offer_completed'] = self.completed
+        d['offer_start_date'] = self.start_date
+        d['offer_end_date'] = self.end_date
+        d['transaction_count'] = self.transaction_count
+        d['transaction_total'] = self.transaction_total
         return(d)
 
     def __str__(self):
@@ -74,6 +74,24 @@ def parse_offer_records(customer_transcript, portfolio):
     return offer_records
 
 
+def convert_date_to_day(x):
+    x_str = str(x)
+    from_date = datetime.date(2013, 7, 29)
+    x_date = datetime.date(int(x_str[0:4]), int(x_str[4:6]), int(x_str[6:]))
+    delta = x_date - from_date
+    return delta.days
+
+
+def create_dummy_columns(df, column_name, drop_column=False, prefix=None, prefix_sep='_'):
+    if prefix is None:
+        prefix = column_name
+    print(f'creating dummies for category column: {column_name}')
+    # df_category_columns = pd.concat([df_category_columns, df[i]])
+    # df_category_columns[i] = df[i]
+    df = pd.concat([df if drop_column==False else df.drop(column_name, axis=1), 
+                   pd.get_dummies(df[column_name], prefix=prefix, prefix_sep=prefix_sep)], 
+                   axis=1)   
+    return df 
 
 def main():
     if not os.path.exists('data/portfolio.pkl'):
@@ -89,9 +107,9 @@ def main():
     profile = pd.read_pickle('data/profile.pkl')
     transcript = pd.read_pickle('data/transcript.pkl')
 
-    # remove users with no demographic info
+    # remove users with no demographic info (gender and income are none, age is set to 118)
     #
-    # profile = profile.dropna()
+    profile = profile.dropna()
 
     # fill NoN values in profile
     #
@@ -146,8 +164,63 @@ def main():
 
     print(f'number of offer records: {offers.shape[0]}')
 
+    # convert date integers to days
+    #
+    profile['membership_start_day'] = profile['became_member_on'].apply(convert_date_to_day)
+
+    # print(profile.describe())
+    # print(profile.became_member_on.min())
+
+    # create age bins
+    #
+    profile['bins_age']=pd.cut(x=profile.age, 
+                               bins=[10,20,30,40,50,60,70,80,90,100,110], 
+                               labels=['_10s','_20s','_30s','_40s','_50s','_60s','_70s','_80s','_90s','100s'])
+
+    print(profile.bins_age.value_counts().sort_index())
+
+    # create income bins
+    #
+    profile['bins_income']=pd.cut(x=profile.income, 
+                                  bins=[25000,50000,75000,100000,125000], 
+                                  labels=['25k+','50k+','75k+','100k+'])
+
+    print(profile.bins_income.value_counts().sort_index())
+
+    # create dummy columns for income and age categories
+    #
+    profile = create_dummy_columns(profile, 'bins_income', prefix='income')
+    profile = create_dummy_columns(profile, 'bins_age', prefix='age')
+
+    # rename id -> person_id to match the offers DataFrame
+    #
+    profile.rename(columns={'id':'person_id'}, inplace=True)
+
+    print(profile.head())
+    
+    # make dummies for offer types
+    # 
+    portfolio = create_dummy_columns(portfolio, 'offer_type')
+                                
+    # make dummies for channels
+    #
+    portfolio = pd.concat([portfolio,
+                          pd.get_dummies(portfolio.channels.apply(pd.Series).stack()).sum(level=0).add_prefix('channel_')],
+                          axis=1)
+
+    # rename id -> offer_id to match the offers DataFrame
+    #
+    portfolio.rename(columns={'id':'offer_id'}, inplace=True)
+
+    print(portfolio.head())
 
 
+    offers = pd.merge(offers, profile, on='person_id')
+    offers = pd.merge(offers, portfolio, on='offer_id')
+
+    print(offers.head())
+    print(offers.isna().sum())
+    print(f'offers shape: {offers.shape}')
 
 if __name__=='__main__':
     start_time = time.time()
