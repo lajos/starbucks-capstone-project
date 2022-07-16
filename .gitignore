@@ -1,6 +1,7 @@
 tmp/
 output.png
 data/*.pkl
+*.psd
 
 # ignore vscode/python temp stuff
 

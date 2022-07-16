@@ -49,7 +49,7 @@ This project uses the [cross-industry standard for data mining](https://en.wikip
 1. **Business Understanding** - Startbucks sends promotions to user through multiple channels (web, email etc..). Customers may use these promotions to find out about new products, or get discounts on purchases.
 2. **Data Understanding** - We look at the data to find out what columns we have, what values the columns contain and to gain some understanding of the promotions, customer profiles and customer actions.
 3. **Data Preparation** - We'll make sure that the data is ready for modeling for example check to see if there are missing values and create columns for categorical values.
-4. **Modeling** - We'll process the transcript records and create a data set that is focused on each offer. We'll analyze the new data set to find out which offer works best for which demographics, and we'll also use a linear regression model to analyze which promotion delivery channel is the most successful.
+4. **Modeling** - We'll process the transcript records and create a data set that is focused on each offer. We'll analyze the new data set to find out which offer works best for which demographics. We'll visualize the results of the statistical analysis and hope to find correlation between demographic variables and the success of different offers. We'll also use a linear regression model to analyze which promotion delivery channel is the most successful. The regression model should explain which delivery channel corresponds to more engagement from users.
 5. **Evaluation** - We'll split the data into training and testing sets so we can evaluate the model's efficiency.
 6. **Deployment** - Deployment is not in the scope of this project.
 
@@ -379,6 +379,13 @@ Linear regression attempts to fit a line that best estimates observed data.
 
 The output Y will be whether the offer was viewed. The X parameters represent the channels of delivery, and the linear regression model will try to find weights for each X parameter.
 
+We'll use R-squared to measure how well the model is fit to the data. R-squared measures statistically how close the regression line fits the data. It's the percentage of the response variable variation that is explained by a linear model. The closer the R-squared value is to 1.0 (100%), the better the model's prediction.
+
+
+![r_squared](images/r_squared.png)
+
+
+
 We'll use the [TheilSenRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.TheilSenRegressor.html) model from the [scikit-learn](https://scikit-learn.org/) package. We'll also test different parameters to find the most optimum settings.
 
 The code for fitting the linear regression model while also finding the best parameters to achieve th best result:
@@ -471,7 +478,7 @@ df_c.style.bar(subset=['weight'], color=[pal[3], pal[2]])
 
 The output:
 
-![thiel_params](images/thiel_params.jpg)
+![thiel_params](images/thiel_params.jpeg)
 
 This indicates that promotions delivered through social media are most likely to be viewed by customers, while promotions advertised on the web are less likely viewed.
 
